@@ -1,0 +1,31 @@
+model:
+  max_seq_len: 1024
+  vocab_size: 50257
+  n_layers: 12
+  n_heads: 12
+  hidden_size: 768
+  mlp_hidden_size: 3072
+  attention_backend: reference
+  compute_dtype: float32
+data_dir: data/processed
+checkpoint_dir: outputs/checkpoints
+seed: 42
+epochs: 1
+micro_batch_size: 1
+gradient_accumulation_steps: 8
+init_lr: 0.0
+peak_lr: 0.0003
+final_lr: 0.00003
+warmup_steps: 100
+weight_decay: 0.1
+grad_clip: 1.0
+eval_every: 1000
+checkpoint_every: 2000
+checkpoint_minutes: 30
+keep_checkpoints: 3
+log_every: 20
+sample_every: 1000
+wandb_project: GuildGPT
+wandb_name: gpt2-small-writingprompts-a100-v1
+tokenizer: gpt2
+synthetic: false

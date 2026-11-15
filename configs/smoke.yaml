@@ -1,0 +1,31 @@
+model:
+  max_seq_len: 8
+  vocab_size: 64
+  n_layers: 2
+  n_heads: 2
+  hidden_size: 16
+  mlp_hidden_size: 64
+  attention_backend: reference
+  compute_dtype: float32
+data_dir: data/smoke
+checkpoint_dir: outputs/smoke-checkpoints
+seed: 42
+epochs: 1
+micro_batch_size: 2
+gradient_accumulation_steps: 2
+init_lr: 0.0
+peak_lr: 0.001
+final_lr: 0.0001
+warmup_steps: 1
+weight_decay: 0.01
+grad_clip: 1.0
+eval_every: 2
+checkpoint_every: 2
+checkpoint_minutes: 0
+keep_checkpoints: 3
+log_every: 1
+sample_every: 100
+wandb_project: null
+wandb_name: null
+tokenizer: gpt2
+synthetic: true
