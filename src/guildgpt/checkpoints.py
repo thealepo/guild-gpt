@@ -4,6 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
+import jax
 import orbax.checkpoint as ocp
 from flax import nnx
 
@@ -91,7 +92,22 @@ def load_model_checkpoint(directory, model):
     directory = Path(directory).resolve()
     metadata = json.loads((directory / "metadata.json").read_text())
     with ocp.PyTreeCheckpointer() as checkpointer:
-        payload = checkpointer.restore(directory / "state")
+        state_dir = directory / "state"
+        # Orbax's saved GPU sharding cannot be resolved on a CPU-only host.
+        # Inference uses one local device, so request that device explicitly.
+        saved_tree = checkpointer.metadata(state_dir).item_metadata.tree
+        sharding = jax.sharding.SingleDeviceSharding(jax.devices()[0])
+        restore_args = jax.tree.map(
+            lambda leaf: (
+                ocp.ArrayRestoreArgs(sharding=sharding)
+                if isinstance(leaf, ocp.metadata.ArrayMetadata)
+                else ocp.RestoreArgs()
+            ),
+            saved_tree,
+        )
+        payload = checkpointer.restore(
+            state_dir, args=ocp.args.PyTreeRestore(restore_args=restore_args)
+        )
     state = nnx.state(model, nnx.Param)
     nnx.replace_by_pure_dict(state, payload["model"])
     nnx.update(model, state)

@@ -100,7 +100,7 @@ def main():
             step=progress["global_step"],
         )
     tokenizer = None
-    if not config.synthetic and config.sample_every:
+    if not config.synthetic and config.sample_every and wandb_run:
         from transformers import GPT2TokenizerFast
 
         tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")

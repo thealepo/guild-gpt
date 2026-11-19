@@ -4,7 +4,7 @@ import numpy as np
 from flax import nnx
 
 from guildgpt import GuildGPT
-from guildgpt.checkpoints import restore_checkpoint, save_checkpoint
+from guildgpt.checkpoints import load_model_checkpoint, restore_checkpoint, save_checkpoint
 from guildgpt.data import WindowLoader
 from guildgpt.training import create_optimizer, train_update
 
@@ -44,3 +44,21 @@ def test_resume_matches_uninterrupted(tmp_path, tiny_run):
     assert jax.tree.structure(nnx.state(optimizer)) == jax.tree.structure(
         nnx.state(resumed_optimizer)
     )
+
+
+def test_inference_checkpoint_restore_uses_local_sharding(tmp_path, tiny_run):
+    model = GuildGPT(tiny_run.model, nnx.Rngs(0))
+    optimizer, _ = create_optimizer(model, tiny_run, 2)
+    path = save_checkpoint(
+        tmp_path,
+        model,
+        optimizer,
+        {"global_step": 1},
+        tiny_run.as_dict(),
+        {"sha256": "example"},
+    )
+    restored = GuildGPT(tiny_run.model, nnx.Rngs(999))
+    metadata = load_model_checkpoint(path, restored)
+    assert metadata["progress"]["global_step"] == 1
+    ids = jnp.array([[1, 2]])
+    np.testing.assert_allclose(model(ids), restored(ids), atol=0)
